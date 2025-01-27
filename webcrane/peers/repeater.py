@@ -1,4 +1,6 @@
 import asyncio
+from asyncio import CancelledError
+
 import websockets
 
 from collections import deque
@@ -6,17 +8,21 @@ from webcrane.peers.peer import Peer
 from webcrane.src.packages import *
 from webcrane.src.rooms import *
 from webcrane.src.tui import input_with_default
-
+from webcrane.peers.upnp import add_port_mapping, remove_port_mapping
 
 class RepeaterPeer(Peer):
     rooms = Rooms()
 
     async def run(self):
-        ip   = input_with_default('Ip', 'localhost')
+        ip   = input_with_default('Ip', '192.168.0.103')
         port = input_with_default('Port', '8765')
         async with websockets.serve(self.bootstrap, ip, int(port)):
             print("Bootstrap started")
-            await asyncio.get_running_loop().create_future()
+            device = add_port_mapping(port)
+            try:
+                await asyncio.get_running_loop().create_future()
+            except CancelledError:
+                remove_port_mapping(device, port)
 
     async def bootstrap(self, websocket: websockets.WebSocketServerProtocol):
         role = await self.recv(websocket)
