@@ -1,4 +1,4 @@
-from upnpy.exceptions import ActionNotFoundError
+from upnpy.exceptions import ActionNotFoundError, SOAPError
 from upnpy.ssdp import SSDPDevice
 
 import upnpy
@@ -26,9 +26,9 @@ def find_device_with_port_mapping(services):
 def add_port_mapping(port: int) -> SSDPDevice:
     internal_ip = get_internal_ip()
     upnp = upnpy.UPnP()
-    devices = upnp.discover()
-    print(devices)
+    upnp.discover()
     device = upnp.get_igd()
+    print(f"UPnP uses {device}")
     service = find_device_with_port_mapping(device.get_services())
     service.AddPortMapping(
             NewRemoteHost='',
@@ -45,8 +45,11 @@ def add_port_mapping(port: int) -> SSDPDevice:
 
 
 def remove_port_mapping(service: SSDPDevice, port: int) -> None:
-    service.DeletePortMapping(
+    try:
+        service.DeletePortMapping(
         NewRemoteHost='',
         NewExternalPort=port,
         NewProtocol='TCP',
     )
+    except SOAPError:
+        pass

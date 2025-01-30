@@ -1,3 +1,6 @@
+from multiprocessing import Event
+
+from webcrane.src.dotignore.dotignore import save_default_dotignore
 from webcrane.src.packages import *
 from webcrane.src.default import get_default_manifest
 from webcrane.src.manifest import Manifest
@@ -38,15 +41,16 @@ class Peer:
 
         # Save default manifest
         get_default_manifest(self.project_root).save(self.manifest_file)
+        save_default_dotignore(self.webcrane_path)
 
         # Complete
         cprint("Complete!", color='green')
 
-    async def push(self):
+    async def push(self, stop_bootstrap: Event):
         mfest = self.get_manifest()
-        print(f"Server is {mfest['sync']['server']}")
+        print(f"Server is running on {mfest['sync']['server']}")
         with connect(f"ws://{mfest['sync']['server']}") as websocket:
-            print("Sending role package")
+            cprint("Sending role package")
             await self.send(websocket, package_chunk_generator(RolePackage('push')))
 
             print("Sending project name")
@@ -85,6 +89,16 @@ class Peer:
                     await self.send_from_generator(websocket, file_generator(self.project_root, filepath, pbar))
 
             cprint("Complete!", 'green')
+
+            print("Entering to console")
+            while True:
+                command = input(": ")
+                if re.fullmatch('exit', command):
+                    stop_bootstrap.set()
+                    break
+
+                else:
+                    cprint('Invalid command', color='red')
 
     async def pull(self):
         mfest = self.get_manifest()
