@@ -1,24 +1,21 @@
 from termcolor import cprint
 from webcrane.peers.peer import Peer
-from webcrane.peers.repeater import RepeaterPeer
+from webcrane.peers.repeater import push
+
 import webcrane
 import asyncio
 
 
 async def cli(mode: str):
     match mode:
-        case 'client':
-            cprint("You are already in client. The statement does not have any affect.", 'red')
-        case 'exit':
-            exit(0)
-        case 'deploy':
-            await RepeaterPeer().run()
         case 'init':
             await Peer().init()
         case 'pull':
             await Peer().pull()
         case 'push':
-            await Peer().push()
+            await push()
+        case 'exit':
+            exit(0)
         case _:
             cprint("Unknown mode.", 'red')
 

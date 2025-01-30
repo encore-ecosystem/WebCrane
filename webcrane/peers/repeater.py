@@ -1,32 +1,30 @@
 import asyncio
-from asyncio import CancelledError
-
-import websockets
+from multiprocessing import Process
 
 from collections import deque
+from multiprocessing import Event
 from webcrane.peers.peer import Peer
 from webcrane.src.packages import *
 from webcrane.src.rooms import *
-from webcrane.src.tui import input_with_default
-from webcrane.peers.upnp import add_port_mapping, remove_port_mapping
+from webcrane.peers.upnp import get_internal_ip
+from webcrane.peers.upnp_websocket import UPnPWebSocket
+
+import websockets
+
 
 class RepeaterPeer(Peer):
     rooms = Rooms()
 
-    async def run(self):
-        ip   = input_with_default('Ip', '192.168.0.103')
-        port = input_with_default('Port', '8765')
-        async with websockets.serve(self.bootstrap, ip, int(port)):
-            print("Bootstrap started")
-            device = add_port_mapping(port)
-            try:
-                await asyncio.get_running_loop().create_future()
-            except CancelledError:
-                remove_port_mapping(device, port)
+    async def run(self, start_bootstrap: Event, port = 8765):
+        ip = get_internal_ip()
+        async with UPnPWebSocket(self.bootstrap, ip, port):
+            print('Bootstrap started')
+            start_bootstrap.set()
+            await asyncio.get_running_loop().create_future()
+            print('Bootstrap stopped')
 
     async def bootstrap(self, websocket: websockets.WebSocketServerProtocol):
         role = await self.recv(websocket)
-
         match role.data.get('role', 'none'):
             case 'pull':
                 await asyncio.gather(self.handle_pull(websocket), self.keepalive(websocket))
@@ -45,16 +43,17 @@ class RepeaterPeer(Peer):
 
     async def handle_push(self, websocket: websockets.WebSocketServerProtocol):
         addr = websocket.remote_address[:2]
+        # cprint(f"[{addr}]: Connected to the room", color='red')
 
-        print(f"[PUB {addr}]: Receiving project package")
+        # print(f"[PUB {addr}]: Receiving project package")
         project_package = await self.recv(websocket)
         project_name = project_package.data['project_name']
 
-        print(f"[PUB {addr}]: Creating room")
+        # print(f"[PUB {addr}]: Creating room")
         self.rooms.remove_room(room_name=project_name)
         self.rooms.create_room(room_name=project_name)
 
-        print(f"[PUB {addr}]: Entering to console")
+        # print(f"[PUB {addr}]: Entering to console")
         while True:
             package = await self.recv(websocket)
             if isinstance(package, RefreshPackage):
@@ -163,4 +162,25 @@ class RepeaterPeer(Peer):
         self.rooms.add_send_request(room_name=room, send_type=SendType.GENERATOR, generator=generator)
 
 
-__all__ = ['RepeaterPeer']
+async def async_run_repeater(start_bootstrap, stop_bootstrap):
+    asyncio.create_task(RepeaterPeer().run(start_bootstrap))
+    while not stop_bootstrap.is_set():
+        await asyncio.sleep(0.1)
+
+
+def run_repeater(start_bootstrap: Event, stop_bootstrap):
+    asyncio.run(async_run_repeater(start_bootstrap, stop_bootstrap))
+
+
+async def push():
+    start_bootstrap = Event()
+    stop_bootstrap = Event()
+    proc = Process(target=run_repeater, args=(start_bootstrap,stop_bootstrap))
+    proc.start()
+
+    while not start_bootstrap.is_set():
+        await asyncio.sleep(0.1)
+    await Peer().push(stop_bootstrap)
+
+
+__all__ = ['RepeaterPeer', 'push']
