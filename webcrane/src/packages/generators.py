@@ -1,4 +1,3 @@
-from webcrane import LENGTH_OF_PATH_IN_PBAR
 from webcrane import PACKAGE_MAX_SIZE
 from .packages import Package, FileChunk, PackageChunk
 from pickle import dumps

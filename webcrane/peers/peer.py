@@ -1,5 +1,6 @@
 from multiprocessing import Event
 
+from webcrane.peers.upnp import get_internal_ip
 from webcrane.src.dotignore.dotignore import save_default_dotignore
 from webcrane.src.packages import *
 from webcrane.src.default import get_default_manifest
@@ -48,8 +49,10 @@ class Peer:
 
     async def push(self, stop_bootstrap: Event):
         mfest = self.get_manifest()
-        print(f"Server is running on {mfest['sync']['server']}")
-        with connect(f"ws://{mfest['sync']['server']}") as websocket:
+        ip = get_internal_ip()
+        port = mfest['sync']['server'].split(':')[1]
+        print(f"Server is running on {ip}:{port}")
+        with connect(f"ws://{ip}:{port}") as websocket:
             cprint("Sending role package")
             await self.send(websocket, package_chunk_generator(RolePackage('push')))
 
@@ -229,7 +232,12 @@ class Peer:
     def get_manifest(self):
         mfest = Manifest()
         mfest.read_manifest(self.manifest_file)
+        self.validate_manifest(mfest)
         return mfest
+
+    def validate_manifest(self, mfest: Manifest):
+        if len(mfest['project']['ignore']) == 0:
+            cprint('No ignore file specified!', color='red')
 
     def get_dotignore(self):
         return DotIgnore().initialize(
