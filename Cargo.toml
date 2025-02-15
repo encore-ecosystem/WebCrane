@@ -4,5 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+easy-upnp = "0.2.1"
 serde = { version = "1.0.217", features = ["derive"] }
+tokio = { version = "1.43.0", features = ["full"] }
+tokio-tungstenite = "0.26.1"
 toml  = "0.8.19"
+futures-util = "0.3.31"
