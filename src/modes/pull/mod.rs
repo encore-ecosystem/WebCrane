@@ -1,14 +1,13 @@
 use crate::modes::shared::decode_addr;
 use futures_util::{SinkExt, StreamExt};
 use tokio_tungstenite::{connect_async, tungstenite::Message};
+use utils::process_requested_files;
 
 mod utils;
 
-use crate::modes::pull::utils::{
-    delete_files, group_files, merge_files, move_files, write_new_files,
-};
+use crate::modes::pull::utils::{delete_files, group_files, move_files};
 use crate::modes::shared::build_local_hash_package;
-use crate::packages::{FileTransfer, Files, GroupedFiles, HashPackage};
+use crate::packages::{GroupedFiles, HashPackage, RequestedFiles};
 
 pub async fn pull(args: &[String], shift: usize) {
     if shift >= args.len() {
@@ -37,7 +36,7 @@ pub async fn pull(args: &[String], shift: usize) {
     // println!("[DEBUG] Grouped files: {:?}", grouped_files);
 
     // 4. Request missing files
-    let file_transfer = FileTransfer::new(
+    let file_transfer = RequestedFiles::new(
         grouped_files.new_files.clone(),
         grouped_files.files_to_update.clone(),
     );
@@ -49,28 +48,15 @@ pub async fn pull(args: &[String], shift: usize) {
         println!("[INFO]: Diff package sent successfully!");
     }
 
-    // 5. Receive missing files
-    let data = ws_receiver.next().await.unwrap().unwrap();
-    let new_files: Files =
-        serde_json::from_str(&data.into_text().unwrap()).expect("Failed to receive new files");
-
-    let data = ws_receiver.next().await.unwrap().unwrap();
-    let files_to_update: Files =
-        serde_json::from_str(&data.into_text().unwrap()).expect("Failed to receive updated files");
-
+    // 5. Receive and process missing files
+    process_requested_files(&mut ws_receiver).await;
     println!("[INFO]: New and updated files were received successfully!");
 
     // println!("{:?}\n{:?}", new_files, files_to_update);
 
-    // 6. Write nonconflict data (new / move / delete)
+    // 6. Process locally stored files
     delete_files(grouped_files.files_to_delete);
     move_files(grouped_files.files_to_move);
-    write_new_files(new_files);
-
-    // 7. Resolve conflicts
-
-    // 8. Write the rest of data
-    merge_files(files_to_update);
 
     println!("[INFO]: Success!");
 }

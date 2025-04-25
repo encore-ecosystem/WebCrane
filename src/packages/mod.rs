@@ -23,12 +23,12 @@ impl HashPackage {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct FileTransfer {
+pub struct RequestedFiles {
     pub new_files: HashSet<PathBuf>,
     pub files_to_update: HashSet<PathBuf>,
 }
 
-impl FileTransfer {
+impl RequestedFiles {
     pub fn new(new_files: HashSet<PathBuf>, files_to_update: HashSet<PathBuf>) -> Self {
         Self {
             new_files,
@@ -37,22 +37,28 @@ impl FileTransfer {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Files {
-    pub path: Vec<PathBuf>,
-    pub content: Vec<Vec<u8>>,
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum FileType {
+    New,
+    Update,
+    Delete,
+    Move,
 }
 
-impl Files {
-    pub fn new() -> Self {
-        let path: Vec<PathBuf> = Vec::new();
-        let content: Vec<Vec<u8>> = Vec::new();
-        Self { path, content }
-    }
+#[derive(Debug, Serialize, Deserialize)]
+pub struct FilePackage {
+    pub path: PathBuf,
+    pub file_type: FileType,
+    pub content: Vec<u8>,
+}
 
-    pub fn add_record(&mut self, path: PathBuf, content: Vec<u8>) {
-        self.path.push(path);
-        self.content.push(content);
+impl FilePackage {
+    pub fn new(path: PathBuf, file_type: FileType, content: Vec<u8>) -> Self {
+        Self {
+            path,
+            file_type,
+            content,
+        }
     }
 }
 
@@ -79,3 +85,6 @@ impl GroupedFiles {
         }
     }
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct EndOfTransfer {}

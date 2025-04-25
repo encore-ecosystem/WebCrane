@@ -6,15 +6,13 @@ use tokio_tungstenite::{
     accept_async,
     tungstenite::{Error, Message, Result},
 };
+use utils::send_requested_files;
 
 mod utils;
 
 use crate::modes::shared::{build_local_hash_package, encode_addr};
-use crate::packages::{FileTransfer, Files};
-use crate::{
-    config::load_config,
-    modes::push::utils::{get_port_config, prepare_requested_files},
-};
+use crate::packages::RequestedFiles;
+use crate::{config::load_config, modes::push::utils::get_port_config};
 
 pub async fn push(_args: &[String], _shift: usize) {
     // Load config
@@ -88,35 +86,12 @@ async fn push_procedure(peer: SocketAddr, stream: TcpStream) -> Result<()> {
     }
 
     // 3. Receive diff
-    let diff = ws_receiver.next().await.unwrap().unwrap();
-    let diff_pkg: FileTransfer = serde_json::from_str(&diff.into_text().unwrap()).unwrap();
+    let data = ws_receiver.next().await.unwrap().unwrap();
+    let requested_files: RequestedFiles = serde_json::from_str(&data.into_text().unwrap()).unwrap();
     println!("[INFO]: Diff package received successfully!");
 
-    println!("{:?}", diff_pkg);
-
     // 4. Send requested files
-    // TODO: REWRITE AS A GENERATOR
-    let new_files: Files = prepare_requested_files(diff_pkg.new_files);
-    let files_to_update: Files = prepare_requested_files(diff_pkg.files_to_update);
-
-    let serialized_new_files =
-        serde_json::to_string(&new_files).expect("Failed to serialize package");
-    if let Err(e) = ws_sender.send(Message::text(serialized_new_files)).await {
-        println!("[Error] Failed to send new files: {}", e);
-    } else {
-        println!("[INFO]: New files were sent successfully!");
-    }
-
-    let serialized_files_to_update =
-        serde_json::to_string(&files_to_update).expect("Failed to serialize package");
-    if let Err(e) = ws_sender
-        .send(Message::text(serialized_files_to_update))
-        .await
-    {
-        println!("[Error] Failed to send updated files: {}", e);
-    } else {
-        println!("[INFO]: Updated files were sent successfully!");
-    }
+    send_requested_files(&mut ws_sender, requested_files).await;
 
     // 5. Close connection
     ws_sender.close().await.unwrap();
