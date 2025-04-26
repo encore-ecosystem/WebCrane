@@ -51,7 +51,7 @@ pub fn load_config() -> Config {
         .unwrap()
         .join(".webcrane")
         .join("config.toml");
-    let content = fs::read_to_string(&path).expect("Could not read config");
+    let content = fs::read_to_string(&path).expect("Could not read config. WebCrane seems to be bot initialized!");
     let config: Config = toml::from_str(&content).expect("Could not parse config");
     config
 }

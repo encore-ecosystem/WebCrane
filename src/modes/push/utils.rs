@@ -34,10 +34,15 @@ pub async fn send_requested_files(
         send_file(ws_sender, file_pkg).await;
     }
 
-    let eot = EndOfTransfer{};
+    let eot = EndOfTransfer {};
     let serialized_end_of_transfer =
         serde_json::to_string(&eot).expect("Failed to serialize EOT package");
-    ws_sender.send(Message::text(serialized_end_of_transfer)).await.unwrap();
+    ws_sender
+        .send(Message::text(serialized_end_of_transfer))
+        .await
+        .unwrap();
+
+    println!("[INFO]: Requested files were sent successfully!");
 }
 
 pub async fn send_file(
@@ -47,7 +52,5 @@ pub async fn send_file(
     let serialized_file = serde_json::to_string(&file).expect("Failed to serialize new files");
     if let Err(e) = ws_sender.send(Message::text(serialized_file)).await {
         println!("[Error] Failed to send new files: {}", e);
-    } else {
-        println!("[INFO]: New files were sent successfully!");
     }
 }
