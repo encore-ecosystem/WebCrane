@@ -29,6 +29,7 @@ pub async fn process_requested_files(
         receive_file_content(ws_receiver, &pb).await;
     }
 
+    // receive end of file transfer signal
     let msg = ws_receiver.next().await.unwrap().unwrap();
     assert!(serde_json::from_str::<EndOfFileTransfer>(&msg.into_text().unwrap()).is_ok());
 }
@@ -42,13 +43,13 @@ pub async fn receive_file_content(
         .expect("Received wrong package at the start of file transfer");
 
     match file_metadata.file_group {
-        FileGroup::New => receive_new_file(ws_receiver, file_metadata, pb).await,
-        FileGroup::Update => receive_updated_file(ws_receiver, file_metadata, pb).await,
+        FileGroup::New => receive_new_file_content(ws_receiver, file_metadata, pb).await,
+        FileGroup::Update => receive_updated_file_content(ws_receiver, file_metadata, pb).await,
         _ => {}
     }
 }
 
-pub async fn receive_new_file(
+pub async fn receive_new_file_content(
     ws_receiver: &mut SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>,
     file_metadata: StartOfFile,
     pb: &ProgressBar,
@@ -75,10 +76,10 @@ pub async fn receive_new_file(
     assert!(serde_json::from_str::<EndOfFile>(&msg.into_text().unwrap()).is_ok());
 }
 
-pub async fn receive_updated_file(
+pub async fn receive_updated_file_content(
     ws_receiver: &mut SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>,
     file_metadata: StartOfFile,
     pb: &ProgressBar,
 ) {
-    receive_new_file(ws_receiver, file_metadata, pb).await;
+    receive_new_file_content(ws_receiver, file_metadata, pb).await;
 }

@@ -1,5 +1,5 @@
 use easy_upnp::{add_ports, delete_ports};
-use file_management::send_requested_files;
+use file_handlers::send_requested_files;
 use futures_util::{SinkExt, StreamExt};
 use std::net::SocketAddr;
 use tokio::net::{TcpListener, TcpStream};
@@ -8,7 +8,7 @@ use tokio_tungstenite::{
     tungstenite::{Error, Message, Result},
 };
 
-mod file_management;
+mod file_handlers;
 mod utils;
 
 use crate::modes::shared::{build_local_hash_package, encode_addr};

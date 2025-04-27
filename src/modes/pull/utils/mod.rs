@@ -1,7 +1,23 @@
+use futures_util::stream::SplitSink;
+use futures_util::SinkExt;
 use std::collections::HashSet;
 use std::{collections::HashMap, path::PathBuf};
+use tokio::net::TcpStream;
+use tokio_tungstenite::tungstenite::Message;
+use tokio_tungstenite::{MaybeTlsStream, WebSocketStream};
 
-use crate::packages::{GroupedFiles, HashPackage};
+use crate::packages::{GroupedFiles, HashPackage, RequestedFiles};
+
+pub async fn request_missing_files(
+    ws_sender: &mut SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>,
+    missing_files: RequestedFiles,
+) {
+    let serialized_missing_files = serde_json::to_string(&missing_files).unwrap();
+    ws_sender
+        .send(Message::text(serialized_missing_files))
+        .await
+        .unwrap();
+}
 
 pub fn group_files(local_hash_pkg: HashPackage, remote_hash_pkg: HashPackage) -> GroupedFiles {
     let remote_path2hash: HashMap<&PathBuf, &Vec<u8>> = remote_hash_pkg
