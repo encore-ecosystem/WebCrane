@@ -1,4 +1,5 @@
 use easy_upnp::{add_ports, delete_ports};
+use file_management::send_requested_files;
 use futures_util::{SinkExt, StreamExt};
 use std::net::SocketAddr;
 use tokio::net::{TcpListener, TcpStream};
@@ -6,8 +7,8 @@ use tokio_tungstenite::{
     accept_async,
     tungstenite::{Error, Message, Result},
 };
-use utils::send_requested_files;
 
+mod file_management;
 mod utils;
 
 use crate::modes::shared::{build_local_hash_package, encode_addr};
@@ -32,6 +33,7 @@ pub async fn push(_args: &[String], _shift: usize) {
     println!("[INFO]: Success. Port is opened for {duration} seconds.");
     println!("[INFO]: Deploying bootstrap");
 
+    // Start listening
     let addr = cfg.server.ip.to_string() + ":" + &cfg.server.port.to_string();
     let encoded_addr = encode_addr(&addr);
 
@@ -48,6 +50,7 @@ pub async fn push(_args: &[String], _shift: usize) {
         tokio::task::spawn(accept_connection(peer, stream));
     }
 
+    // Close port
     println!("[INFO]: Closing port 5432...");
     for result in delete_ports([get_port_config(port, duration)]) {
         if let Err(err) = result {

@@ -37,31 +37,6 @@ impl RequestedFiles {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum FileType {
-    New,
-    Update,
-    Delete,
-    Move,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct FilePackage {
-    pub path: PathBuf,
-    pub file_type: FileType,
-    pub content: Vec<u8>,
-}
-
-impl FilePackage {
-    pub fn new(path: PathBuf, file_type: FileType, content: Vec<u8>) -> Self {
-        Self {
-            path,
-            file_type,
-            content,
-        }
-    }
-}
-
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GroupedFiles {
     pub new_files: HashSet<PathBuf>,
@@ -86,5 +61,48 @@ impl GroupedFiles {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum FileGroup {
+    New,
+    Update,
+    Delete,
+    Move,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
-pub struct EndOfTransfer {}
+pub struct StartOfFIleTransfer {
+    pub num_files: usize,
+    pub total_size: u64,
+}
+
+impl StartOfFIleTransfer {
+    pub fn new(num_files: usize, total_size: u64) -> Self {
+        Self {
+            num_files,
+            total_size,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct EndOfFileTransfer {}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct StartOfFile {
+    pub path: PathBuf,
+    pub file_group: FileGroup,
+    pub num_chunks: usize,
+}
+
+impl StartOfFile {
+    pub fn new(path: PathBuf, file_group: FileGroup, num_chunks: usize) -> Self {
+        Self {
+            path,
+            file_group,
+            num_chunks,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct EndOfFile {}

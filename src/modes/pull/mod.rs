@@ -1,11 +1,13 @@
 use crate::modes::shared::decode_addr;
+use file_management::received::process_requested_files;
 use futures_util::{SinkExt, StreamExt};
 use tokio_tungstenite::{connect_async, tungstenite::Message};
-use utils::process_requested_files;
 
+mod file_management;
 mod utils;
 
-use crate::modes::pull::utils::{delete_files, group_files, move_files};
+use crate::modes::pull::file_management::local::{delete_files, move_files};
+use crate::modes::pull::utils::group_files;
 use crate::modes::shared::build_local_hash_package;
 use crate::packages::{GroupedFiles, HashPackage, RequestedFiles};
 
