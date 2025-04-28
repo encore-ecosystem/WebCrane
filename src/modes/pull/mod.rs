@@ -1,16 +1,13 @@
-use file_handlers::received::process_requested_files;
 use futures_util::StreamExt;
 use tokio_tungstenite::connect_async;
-use utils::request_missing_files;
 
-mod file_handlers;
+mod handlers;
 mod utils;
 
-use crate::modes::pull::file_handlers::local::{delete_files, move_files};
-use crate::modes::pull::utils::group_files;
-use crate::modes::shared::build_local_hash_package;
-use crate::modes::shared::decode_addr;
+use crate::modes::common::{file_utils::build_local_hash_package, socket_utils::decode_addr};
 use crate::packages::{GroupedFiles, HashPackage, RequestedFiles};
+use handlers::file_handlers::{delete_files, move_files, process_requested_files};
+use utils::{group_files, request_missing_files};
 
 pub async fn pull(args: &[String], shift: usize) {
     if shift >= args.len() {

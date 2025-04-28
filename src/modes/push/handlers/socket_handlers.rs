@@ -4,12 +4,10 @@ use tokio::net::TcpStream;
 use tokio::{fs::File, io::AsyncReadExt};
 use tokio_tungstenite::{tungstenite::Message, WebSocketStream};
 
-mod utils;
-
+use crate::modes::push::handlers::utils::{count_chunks, count_total_size, CHUNK_SIZE};
 use crate::packages::{
     EndOfFile, EndOfFileTransfer, FileGroup, RequestedFiles, StartOfFIleTransfer, StartOfFile,
 };
-use utils::{count_chunks, count_total_size, CHUNK_SIZE};
 
 pub async fn send_requested_files(
     ws_sender: &mut SplitSink<WebSocketStream<TcpStream>, Message>,

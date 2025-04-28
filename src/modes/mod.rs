@@ -1,7 +1,7 @@
 mod init;
 mod pull;
 mod push;
-mod shared;
+mod common;
 
 pub async fn enter_webcrane_context(args: &[String], shift: usize) {
     if shift >= args.len() {
