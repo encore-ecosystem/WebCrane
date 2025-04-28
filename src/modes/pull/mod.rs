@@ -41,13 +41,14 @@ pub async fn pull(args: &[String], shift: usize) {
     request_missing_files(&mut ws_sender, missing_files).await;
     println!("[INFO]: Missing file were requested successfully!");
 
-    // 5. Receive and process missing files
-    process_requested_files(&mut ws_receiver).await;
-    println!("[INFO]: Missing were received successfully!");
-
-    // 6. Process locally stored files
+    // 5. Process locally stored files
     delete_files(grouped_files.files_to_delete);
     move_files(grouped_files.files_to_move);
+    println!("[INFO]: Locally stored files were processed successfully!");
+
+    // 6. Receive and process missing files
+    process_requested_files(&mut ws_receiver).await;
+    println!("[INFO]: Missing were received and processed successfully!");
 
     println!("[INFO]: Done!");
 }
