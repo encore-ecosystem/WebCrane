@@ -4,9 +4,7 @@ use std::{
 };
 use tokio::fs;
 
-use crate::packages::RequestedFiles;
-
-pub const CHUNK_SIZE: usize = 4 * 1024;
+use crate::{packages::RequestedFiles, shared::constants::FILE_TRANSFER_CHUNK_SIZE};
 
 pub async fn count_chunks<P: AsRef<Path>>(path: P) -> io::Result<usize> {
     let metadata = fs::metadata(path).await?;
@@ -15,7 +13,7 @@ pub async fn count_chunks<P: AsRef<Path>>(path: P) -> io::Result<usize> {
     let chunks = if file_size == 0 {
         0
     } else {
-        file_size.div_ceil(CHUNK_SIZE)
+        file_size.div_ceil(FILE_TRANSFER_CHUNK_SIZE)
     };
 
     Ok(chunks)

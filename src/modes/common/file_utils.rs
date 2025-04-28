@@ -5,8 +5,7 @@ use std::{env, fs::File};
 
 use crate::modes::common::error::Error;
 use crate::packages::HashPackage;
-
-const CHUNK_SIZE: u64 = 256 * 1024;
+use crate::shared::constants::FILE_READ_CHUNK_SIZE;
 
 pub fn build_local_hash_package() -> Result<HashPackage, Error> {
     let project_root = env::current_dir()?;
@@ -29,22 +28,22 @@ pub fn build_local_hash_package() -> Result<HashPackage, Error> {
                 let rel_path = entry.path().strip_prefix(env::current_dir()?)?;
 
                 let mut hasher = Hasher::new();
-                let mut file_buffer = vec![0u8; CHUNK_SIZE as usize];
+                let mut file_buffer = vec![0u8; FILE_READ_CHUNK_SIZE];
 
                 let mut file = File::open(entry.path())?;
                 let file_size = file.metadata()?.len();
 
-                if file_size > 3 * CHUNK_SIZE {
+                if file_size > 3 * FILE_READ_CHUNK_SIZE as u64 {
                     // Read beginning
                     file.read_exact(&mut file_buffer)?;
                     hasher.update(&file_buffer);
                     // Read middle
                     let middle = file_size / 2;
-                    file.seek(SeekFrom::Start(middle - (CHUNK_SIZE / 2)))?;
+                    file.seek(SeekFrom::Start(middle - (FILE_READ_CHUNK_SIZE as u64 / 2)))?;
                     file.read_exact(&mut file_buffer)?;
                     hasher.update(&file_buffer);
                     // Read end
-                    file.seek(SeekFrom::End(-(CHUNK_SIZE as i64)))?;
+                    file.seek(SeekFrom::End(-(FILE_READ_CHUNK_SIZE as i64)))?;
                     file.read_exact(&mut file_buffer)?;
                     hasher.update(&file_buffer);
                 } else {

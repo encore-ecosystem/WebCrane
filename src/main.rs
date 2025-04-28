@@ -1,6 +1,7 @@
 mod modes;
 mod packages;
 mod config;
+mod shared;
 
 use crate::modes::enter_webcrane_context;
 

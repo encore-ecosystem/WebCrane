@@ -4,7 +4,8 @@ use tokio::net::TcpStream;
 use tokio::{fs::File, io::AsyncReadExt};
 use tokio_tungstenite::{tungstenite::Message, WebSocketStream};
 
-use crate::modes::push::handlers::utils::{count_chunks, count_total_size, CHUNK_SIZE};
+use crate::shared::constants::FILE_READ_CHUNK_SIZE;
+use crate::modes::push::handlers::utils::{count_chunks, count_total_size};
 use crate::packages::{
     EndOfFile, EndOfFileTransfer, FileGroup, RequestedFiles, StartOfFIleTransfer, StartOfFile,
 };
@@ -56,7 +57,7 @@ pub async fn send_file(
 
     // send content by chunks
     let mut file = File::open(&file_path).await.unwrap();
-    let mut buffer = vec![0u8; CHUNK_SIZE];
+    let mut buffer = vec![0u8; FILE_READ_CHUNK_SIZE];
     loop {
         let n = file.read(&mut buffer).await.unwrap();
         if n == 0 {
