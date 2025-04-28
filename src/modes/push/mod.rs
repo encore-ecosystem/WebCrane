@@ -77,7 +77,7 @@ async fn push_procedure(peer: SocketAddr, stream: TcpStream) -> Result<()> {
     let (mut ws_sender, mut ws_receiver) = ws_stream.split();
 
     // 1. Form hash package
-    let hash_pkg = build_local_hash_package();
+    let hash_pkg = build_local_hash_package().unwrap();
 
     // 2. Send hash package
     let serialized_hash_pkg =

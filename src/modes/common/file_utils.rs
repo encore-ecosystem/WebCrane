@@ -1,11 +1,15 @@
+use blake3::Hasher;
 use ignore::WalkBuilder;
-use sha2::Digest;
-use std::{env, fs::File, io::Read};
+use std::io::{Read, Seek, SeekFrom};
+use std::{env, fs::File};
 
+use crate::modes::common::error::Error;
 use crate::packages::HashPackage;
 
-pub fn build_local_hash_package() -> HashPackage {
-    let project_root = env::current_dir().unwrap();
+const CHUNK_SIZE: u64 = 256 * 1024;
+
+pub fn build_local_hash_package() -> Result<HashPackage, Error> {
+    let project_root = env::current_dir()?;
     let webcrane_path = project_root.join(".webcrane");
     let webcraneignore_path = webcrane_path.join(".webcraneignore");
 
@@ -22,22 +26,37 @@ pub fn build_local_hash_package() -> HashPackage {
                 if !entry.path().is_file() {
                     continue;
                 }
-                let rel_path = entry
-                    .path()
-                    .strip_prefix(env::current_dir().unwrap())
-                    .unwrap();
+                let rel_path = entry.path().strip_prefix(env::current_dir()?)?;
 
-                let mut hasher = sha2::Sha256::new();
-                let mut file_buffer = [0; 1024];
+                let mut hasher = Hasher::new();
+                let mut file_buffer = vec![0u8; CHUNK_SIZE as usize];
 
-                File::open(entry.path())
-                    .unwrap()
-                    .read_exact(&mut file_buffer)
-                    .unwrap_or(());
+                let mut file = File::open(entry.path())?;
+                let file_size = file.metadata()?.len();
 
-                hasher.update(rel_path.to_str().unwrap());
-                hasher.update(file_buffer);
-                package.add_record(rel_path.to_path_buf(), hasher.finalize().to_vec());
+                if file_size > 3 * CHUNK_SIZE {
+                    // Read beginning
+                    file.read_exact(&mut file_buffer)?;
+                    hasher.update(&file_buffer);
+                    // Read middle
+                    let middle = file_size / 2;
+                    file.seek(SeekFrom::Start(middle - (CHUNK_SIZE / 2)))?;
+                    file.read_exact(&mut file_buffer)?;
+                    hasher.update(&file_buffer);
+                    // Read end
+                    file.seek(SeekFrom::End(-(CHUNK_SIZE as i64)))?;
+                    file.read_exact(&mut file_buffer)?;
+                    hasher.update(&file_buffer);
+                } else {
+                    file.read_to_end(&mut file_buffer)?;
+                }
+
+                hasher.update(file_size.to_string().as_bytes());
+                hasher.update(rel_path.to_str().unwrap().as_bytes());
+                package.add_record(
+                    rel_path.to_path_buf(),
+                    hasher.finalize().to_hex().to_string().as_bytes().to_vec(),
+                );
             }
             Err(err) => {
                 println!("[WARN]: {:?}", err);
@@ -45,5 +64,5 @@ pub fn build_local_hash_package() -> HashPackage {
         }
     }
 
-    package
+    Ok(package)
 }

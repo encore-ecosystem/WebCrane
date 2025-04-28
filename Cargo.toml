@@ -10,9 +10,9 @@ tokio = { version = "1.43.0", features = ["full"] }
 tokio-tungstenite = "0.26.1"
 futures-util = "0.3.31"
 ignore = "0.4.23"
-sha2 = "0.10.8"
 serde_json = "1.0.140"
 bincode = { version = "2.0.1", features = ["serde"] }
 toml = "0.8.20"
 base64 = "0.22.1"
 indicatif = "0.17.11"
+blake3 = "1.8.2"

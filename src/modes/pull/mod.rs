@@ -28,7 +28,7 @@ pub async fn pull(args: &[String], shift: usize) {
     let remote_hash_pkg: HashPackage = serde_json::from_str(&data.into_text().unwrap()).unwrap();
 
     // 3. Get hashed of local files
-    let local_hash_pkg = build_local_hash_package();
+    let local_hash_pkg = build_local_hash_package().unwrap();
 
     // 3. Compare local and remote files, group files
     let grouped_files: GroupedFiles = group_files(local_hash_pkg, remote_hash_pkg);

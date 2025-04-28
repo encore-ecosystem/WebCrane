@@ -64,7 +64,7 @@ pub async fn send_file(
         }
         // rewrite chunk package as {index: ..., total: ..., data: ...}
         ws_sender
-            .send(Message::binary(buffer.to_vec()))
+            .send(Message::binary(buffer[..n].to_vec()))
             .await
             .unwrap();
     }
