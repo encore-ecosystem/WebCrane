@@ -2,3 +2,9 @@
 dist
 .venv
 __pycache__
+tests
+.webcrane
+
+# Added by cargo
+
+/target

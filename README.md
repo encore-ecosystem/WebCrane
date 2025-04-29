@@ -1,47 +1,33 @@
 # WebCrane
-Old name is wsvcs (WebSockets Version Control System)
+The old project name is wsvcs (WebSockets Version Control System)
   
 ## Description
-This project resolve the git's restriction about 100mb of commit size. We use the following idea: wsvcs will "chunkify" every file that you want to share with coloborators.    
+This project aims to resolve git's commit size limitation. The idea is to work with chunkified files, thus minimizing memory and network usage.
 
 ## Getting Started
 
 ### Dependencies
-- Python 3.12
-- Windows (Tested only between win2win case)
+- rust 1.86
+- UPnP support
 
 ### Installing
 ```bash
 git clone https://github.com/encore-ecosystem/webcrane.git
 cd webcrane
-pip3 install .
+cargo build --release
 ```
 ### Executing program
 ```
-webcrane <option>
-option:
+webcrane --<option>
+options:
 - init
-- deploy
 - push
-- pull
-- cli
+- pull <code>
 ```
 
 ## Version History
 * 0.1
     * Initial Release
-* 0.2
-    * Add dotignore support (without whitelist)
-    * Boosting working speed
-    * Fixing bugs
-* 0.3
-    * Add colored progress bars
-    * Multithreaded hashing
-* 0.4
-    * New peer logic
-    * More info in progress bars
-    * Updated algorithms
-    * Threaded grouping files
 
 ## License
 
@@ -49,4 +35,6 @@ This project is licensed under the MIT License - see the LICENSE.md file for det
 
 ## ToDo:
 - Logging
-- Merging support
+- Project validation
+- Support for merging
+- Support for branching and committing
