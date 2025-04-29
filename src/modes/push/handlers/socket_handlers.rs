@@ -1,14 +1,15 @@
 use futures_util::{stream::SplitSink, SinkExt};
+use std::fs::File;
+use std::io::Read;
 use std::path::PathBuf;
 use tokio::net::TcpStream;
-use tokio::{fs::File, io::AsyncReadExt};
 use tokio_tungstenite::{tungstenite::Message, WebSocketStream};
 
-use crate::shared::constants::FILE_READ_CHUNK_SIZE;
 use crate::modes::push::handlers::utils::{count_chunks, count_total_size};
 use crate::packages::{
     EndOfFile, EndOfFileTransfer, FileGroup, RequestedFiles, StartOfFIleTransfer, StartOfFile,
 };
+use crate::shared::constants::FILE_READ_CHUNK_SIZE;
 
 pub async fn send_requested_files(
     ws_sender: &mut SplitSink<WebSocketStream<TcpStream>, Message>,
@@ -56,10 +57,10 @@ pub async fn send_file(
     ws_sender.send(Message::text(serialized_sot)).await.unwrap();
 
     // send content by chunks
-    let mut file = File::open(&file_path).await.unwrap();
+    let mut file = File::open(&file_path).unwrap();
     let mut buffer = vec![0u8; FILE_READ_CHUNK_SIZE];
     loop {
-        let n = file.read(&mut buffer).await.unwrap();
+        let n = file.read(&mut buffer).unwrap();
         if n == 0 {
             break;
         }
@@ -68,6 +69,7 @@ pub async fn send_file(
             .send(Message::binary(buffer[..n].to_vec()))
             .await
             .unwrap();
+        tokio::time::sleep(std::time::Duration::from_millis(2)).await;
     }
 
     // send end of file signal

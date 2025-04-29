@@ -7,6 +7,7 @@ use tokio_tungstenite::{
     accept_async,
     tungstenite::{Error, Message, Result},
 };
+use utils::get_ip_from_config;
 
 mod handlers;
 mod utils;
@@ -17,7 +18,7 @@ use crate::{config::load_config, modes::push::utils::get_port_config};
 
 pub async fn push(_args: &[String], _shift: usize) {
     // Load config
-    let cfg = load_config();
+    let cfg = load_config().unwrap();
 
     // Open port
     let port = cfg.server.port;
@@ -33,15 +34,24 @@ pub async fn push(_args: &[String], _shift: usize) {
     println!("[INFO]: Success. Port is opened for {duration} seconds.");
     println!("[INFO]: Deploying bootstrap");
 
-    // Start listening
-    let addr = cfg.server.ip.to_string() + ":" + &cfg.server.port.to_string();
-    let encoded_addr = encode_addr(&cfg.server.ip.to_string(), &cfg.server.port.to_string()).await;
-
-    let listener = TcpListener::bind(&addr)
+    // Get address
+    let (local_ip, external_ip) = get_ip_from_config().await;
+    let local_addr = local_ip.to_string() + ":" + &port.to_string();
+    println!("[INFO]: Bootstrap listens to {}", &local_addr);
+    let listener = TcpListener::bind(&local_addr)
         .await
-        .unwrap_or_else(|_| panic!("Bootstrap is unable to listen to {}", addr));
-    println!("[INFO]: Bootstrap listens to {}", addr);
-    println!("[INFO]: Credentials: {}", encoded_addr);
+        .unwrap_or_else(|_| panic!("Bootstrap is unable to listen to {}", &local_addr));
+
+    if let Some(external_ip) = external_ip {
+        let encoded_addr =
+            encode_addr(&external_ip.to_string(), &cfg.server.port.to_string()).await;
+        println!("[INFO]: Credentials: {}", encoded_addr);
+    } else {
+        let encoded_addr = encode_addr(&local_ip.to_string(), &cfg.server.port.to_string()).await;
+        println!("[INFO]: Credentials: {}", encoded_addr);
+    };
+
+    // Start listening
     while let Ok((stream, _)) = listener.accept().await {
         let peer = stream
             .peer_addr()

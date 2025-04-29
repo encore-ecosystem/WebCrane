@@ -34,8 +34,6 @@ options:
 This project is licensed under the MIT License - see the LICENSE.md file for details
 
 ## ToDo:
-- Fix file hash calculation
-- Add chunk validation
 - Logging
 - Project validation
 - Support for merging

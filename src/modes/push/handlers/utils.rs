@@ -1,13 +1,9 @@
-use std::{
-    io::{self},
-    path::Path,
-};
-use tokio::fs;
+use std::{fs, io, path::Path};
 
 use crate::{packages::RequestedFiles, shared::constants::FILE_TRANSFER_CHUNK_SIZE};
 
 pub async fn count_chunks<P: AsRef<Path>>(path: P) -> io::Result<usize> {
-    let metadata = fs::metadata(path).await?;
+    let metadata = fs::metadata(path)?;
     let file_size = metadata.len() as usize;
 
     let chunks = if file_size == 0 {
@@ -27,7 +23,7 @@ pub async fn count_total_size(requested_files: &RequestedFiles) -> io::Result<u6
         .iter()
         .chain(requested_files.files_to_update.iter())
     {
-        let metadata = fs::metadata(path).await?;
+        let metadata = fs::metadata(path)?;
         if metadata.is_file() {
             total_bytes += metadata.len();
         }

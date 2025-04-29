@@ -26,6 +26,6 @@ pub async fn enter_init(_args: &[String]) {
         file.write_all(text.as_bytes()).unwrap()
     }
     if !webcraneconfig_path.exists() {
-        create_config(webcraneconfig_path);
+        create_config(webcraneconfig_path).unwrap();
     }
 }
