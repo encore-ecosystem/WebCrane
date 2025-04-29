@@ -35,7 +35,7 @@ pub async fn push(_args: &[String], _shift: usize) {
 
     // Start listening
     let addr = cfg.server.ip.to_string() + ":" + &cfg.server.port.to_string();
-    let encoded_addr = encode_addr(&addr);
+    let encoded_addr = encode_addr(&cfg.server.ip.to_string(), &cfg.server.port.to_string()).await;
 
     let listener = TcpListener::bind(&addr)
         .await
