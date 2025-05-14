@@ -3,25 +3,6 @@
 version = 4
 
 [[package]]
-name = "WebCrane"
-version = "0.1.0"
-dependencies = [
- "base64",
- "bincode",
- "blake3",
- "easy-upnp",
- "external-ip",
- "futures-util",
- "ignore",
- "indicatif",
- "serde",
- "serde_json",
- "tokio",
- "tokio-tungstenite",
- "toml",
-]
-
-[[package]]
 name = "addr2line"
 version = "0.24.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2242,6 +2223,25 @@ checksum = "5a6580f308b1fad9207618087a65c04e7a10bc77e02c8e84e9b00dd4b12fa0bb"
 dependencies = [
  "js-sys",
  "wasm-bindgen",
+]
+
+[[package]]
+name = "webcrane"
+version = "0.1.0"
+dependencies = [
+ "base64",
+ "bincode",
+ "blake3",
+ "easy-upnp",
+ "external-ip",
+ "futures-util",
+ "ignore",
+ "indicatif",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tokio-tungstenite",
+ "toml",
 ]
 
 [[package]]

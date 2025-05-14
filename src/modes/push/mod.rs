@@ -42,14 +42,15 @@ pub async fn push(_args: &[String], _shift: usize) {
         .await
         .unwrap_or_else(|_| panic!("Bootstrap is unable to listen to {}", &local_addr));
 
+    let encoded_local_addr = encode_addr(&local_ip.to_string(), &cfg.server.port.to_string()).await;
+    let encoded_addr;
+    println!("[INFO]: Local token: {}", encoded_local_addr);
     if let Some(external_ip) = external_ip {
-        let encoded_addr =
-            encode_addr(&external_ip.to_string(), &cfg.server.port.to_string()).await;
-        println!("[INFO]: Credentials: {}", encoded_addr);
+        encoded_addr = encode_addr(&external_ip.to_string(), &cfg.server.port.to_string()).await;
     } else {
-        let encoded_addr = encode_addr(&local_ip.to_string(), &cfg.server.port.to_string()).await;
-        println!("[INFO]: Credentials: {}", encoded_addr);
+        encoded_addr = encode_addr(&local_ip.to_string(), &cfg.server.port.to_string()).await;
     };
+    println!("[INFO]: Public token: {}", encoded_addr);
 
     // Start listening
     while let Ok((stream, _)) = listener.accept().await {
